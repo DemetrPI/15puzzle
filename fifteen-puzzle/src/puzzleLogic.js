@@ -1,3 +1,5 @@
+import { aStar } from './algorithm.js'; // Import algorithms
+
 export function generatePuzzle() {
   let numbers = Array.from({ length: 15 }, (_, index) => index + 1);
   numbers = shuffle(numbers);
@@ -37,3 +39,33 @@ function getRowCol(index) {
     col: index % 4
   };
 }
+
+
+function convertTo2D(puzzle1D) {
+  const puzzle2D = [];
+  for (let i = 0; i < 4; i++) {
+    const row = [];
+    for (let j = 0; j < 4; j++) {
+      row.push(puzzle1D[i * 4 + j] === null ? 0 : puzzle1D[i * 4 + j]);
+    }
+    puzzle2D.push(row);
+  }
+  return puzzle2D;
+}
+
+function convertTo1D(puzzle2D) {
+  const puzzle1D = [];
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      puzzle1D.push(puzzle2D[i][j] === 0 ? null : puzzle2D[i][j]);
+    }
+  }
+  return puzzle1D;
+}
+
+export async function solveWithAStar(puzzle1D) {
+  const puzzle2D = convertTo2D(puzzle1D);
+  const result = await aStar(puzzle2D);
+  return result.board_list.map(board => convertTo1D(board)).reverse();
+}
+
