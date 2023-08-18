@@ -1,4 +1,4 @@
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, Flex } from '@chakra-ui/react';
 import { useState } from 'react';
 import { generatePuzzle, canSwap, swap } from './puzzleLogic';
 import { solveWithAStar } from './puzzleLogic';
@@ -31,10 +31,15 @@ function Puzzle() {
   };
 
   return (
-    <>
+    <Flex
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      height="100vh"
+    >
       <Box
-        width="250px"
-        height="250px"
+        width={["90%", "250px"]} // Adjust width for mobile and non-mobile views
+        height={["90vw", "250px"]} // Maintain the aspect ratio in mobile view
         display="grid"
         gridTemplateColumns="repeat(4, 1fr)"
         gap={1}
@@ -47,22 +52,21 @@ function Puzzle() {
             key={index}
             flex="1"
             height="100%"
-            bg={value === null ? 'transparent' : 'teal.200'}
-            _hover={{ bg: value === null ? 'transparent' : 'teal.300' }}
+            bg={value === null ? "transparent" : "teal.200"}
+            _hover={{ bg: value === null ? "transparent" : "teal.300" }}
             onClick={() => handleTileClick(index)}
             isDisabled={value === null}
           >
             {value}
           </Button>
         ))}
-
       </Box>
-      <Box>
+      <Box mt={3}>
         <Button onClick={handleAStarSolve}>Solve with AI</Button>
-
       </Box>
-    </>
+    </Flex>
   );
+  
 }
 
 export default Puzzle;

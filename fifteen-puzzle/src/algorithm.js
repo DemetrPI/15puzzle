@@ -7,6 +7,7 @@ const SOLVED_STATE = [
     [13, 14, 15, 0],
 ];
 
+
 function aStar(initialState) {
     return new Promise((resolve, reject) => {
         let distance = {};

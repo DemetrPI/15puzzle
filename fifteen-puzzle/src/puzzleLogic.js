@@ -4,7 +4,30 @@ export function generatePuzzle() {
   let numbers = Array.from({ length: 15 }, (_, index) => index + 1);
   numbers = shuffle(numbers);
   numbers.push(null); // for the empty spot
+
+  // Check if the generated puzzle is solvable, otherwise shuffle again
+  while (!isSolvable(numbers)) {
+    numbers = shuffle(numbers);
+  }
+
   return numbers;
+}
+
+function isSolvable(numbers) {
+  const inversions = countInversions(numbers);
+  return inversions % 2 === 0; // If inversions are even, puzzle is solvable
+}
+
+function countInversions(numbers) {
+  let inversions = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    for (let j = i + 1; j < numbers.length; j++) {
+      if (numbers[i] && numbers[j] && numbers[i] > numbers[j]) {
+        inversions++;
+      }
+    }
+  }
+  return inversions;
 }
 
 function shuffle(array) {
@@ -14,6 +37,7 @@ function shuffle(array) {
   }
   return array;
 }
+
 
 export function canSwap(puzzle, index) {
   const emptyIndex = puzzle.indexOf(null);
@@ -68,4 +92,3 @@ export async function solveWithAStar(puzzle1D) {
   const result = await aStar(puzzle2D);
   return result.board_list.map(board => convertTo1D(board)).reverse();
 }
-
