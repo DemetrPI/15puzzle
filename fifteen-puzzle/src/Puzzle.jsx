@@ -2,14 +2,31 @@ import { Box, Button, Flex } from '@chakra-ui/react';
 import { useState } from 'react';
 import { generatePuzzle, canSwap, swap } from './puzzleLogic';
 import { solveWithAStar } from './puzzleLogic';
+import { useWorker } from '@koale/useworker';
 
 function Puzzle() {
+  const [puzzleWorker, { status, kill }] = useWorker(solveWithAStar);
   const [puzzle, setPuzzle] = useState(generatePuzzle());
+  const [message, setMessage] = useState('');
 
   const handleAStarSolve = async () => {
-    const solution = await solveWithAStar(puzzle);
-    animateSolution(solution);
-  };
+      const solution = await puzzleWorker(puzzle);
+      animateSolution(solution);
+  
+      setMessage('Solving, please wait...');
+      try {
+        const sortedNumbers = await puzzleWorker(puzzle);
+        setMessage('Solution completed!');
+      } catch (error) {
+        setMessage(`Error: ${error.message}`);
+      }
+    };
+  
+    const terminateWorker = () => {
+      kill();
+      setMessage('Solving operation terminated.');
+    };
+  
 
   const animateSolution = (solutionSteps) => {
     let step = 0;
@@ -63,6 +80,8 @@ function Puzzle() {
       </Box>
       <Box mt={3}>
         <Button onClick={handleAStarSolve}>Solve with AI</Button>
+        <Button onClick={terminateWorker}>Stop solution</Button>
+        <p>Status: {status}</p>
       </Box>
     </Flex>
   );

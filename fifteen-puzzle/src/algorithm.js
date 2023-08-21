@@ -134,4 +134,4 @@ function getBlankCoordinates(state) {
             if (state[i][j] === 0) return { x: i, y: j };
 }
 
-export { aStar }
+export default aStar;
