@@ -1,4 +1,4 @@
-import { aStar } from './algorithm.js'; // Import algorithms
+import { aStar, dfs, hillClimbing } from "./algorithm.js"; // Import algorithms
 
 export function generatePuzzle() {
   let numbers = Array.from({ length: 15 }, (_, index) => index + 1);
@@ -38,7 +38,6 @@ function shuffle(array) {
   return array;
 }
 
-
 export function canSwap(puzzle, index) {
   const emptyIndex = puzzle.indexOf(null);
   const { row: emptyRow, col: emptyCol } = getRowCol(emptyIndex);
@@ -53,17 +52,19 @@ export function canSwap(puzzle, index) {
 export function swap(puzzle, index) {
   const emptyIndex = puzzle.indexOf(null);
   const newPuzzle = [...puzzle];
-  [newPuzzle[emptyIndex], newPuzzle[index]] = [newPuzzle[index], newPuzzle[emptyIndex]];
+  [newPuzzle[emptyIndex], newPuzzle[index]] = [
+    newPuzzle[index],
+    newPuzzle[emptyIndex],
+  ];
   return newPuzzle;
 }
 
 function getRowCol(index) {
   return {
     row: Math.floor(index / 4),
-    col: index % 4
+    col: index % 4,
   };
 }
-
 
 function convertTo2D(puzzle1D) {
   const puzzle2D = [];
@@ -87,8 +88,21 @@ function convertTo1D(puzzle2D) {
   return puzzle1D;
 }
 
-export async function solveWithAStar(puzzle1D) {
+export function solveWithAStar(puzzle1D) {
   const puzzle2D = convertTo2D(puzzle1D);
-  const result = await aStar(puzzle2D);
-  return result.board_list.map(board => convertTo1D(board)).reverse();
+  const result = aStar(puzzle2D);
+  return result.board_list.map((board) => convertTo1D(board)).reverse();
+}
+
+export async function solveWithDFS(puzzle1D) {
+  const puzzle2D = convertTo2D(puzzle1D);
+  const result = await dfs(puzzle2D);
+  return result.board_list.map((board) => convertTo1D(board)).reverse();
+}
+
+
+export function solveWithHillClimbing(puzzle1D) {
+  const puzzle2D = convertTo2D(puzzle1D);
+  const result = hillClimbing(puzzle2D);
+  return result.board_list.map((board) => convertTo1D(board)).reverse();
 }

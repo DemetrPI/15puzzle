@@ -1,14 +1,63 @@
 import { Box, Button, Flex } from '@chakra-ui/react';
-import { useState } from 'react';
-import { generatePuzzle, canSwap, swap } from './puzzleLogic';
-import { solveWithAStar } from './puzzleLogic';
+import { useState, useEffect, useRef } from 'react';
+import {
+   generatePuzzle, 
+   canSwap, 
+   swap,
+   solveWithAStar,
+   solveWithDFS, 
+   solveWithHillClimbing 
+  } from './puzzleLogic';
+
 
 function Puzzle() {
   const [puzzle, setPuzzle] = useState(generatePuzzle());
+  const [counter, setCounter] = useState(0);
 
-  const handleAStarSolve = async () => {
-    const solution = await solveWithAStar(puzzle);
-    animateSolution(solution);
+  // Create a ref to access the DOM element
+  const stepTxtRef = useRef(null);
+
+    // Use useEffect to update the DOM element when the counter changes
+    useEffect(() => {
+      // Check if the ref is available
+      if (stepTxtRef.current) {
+        // Update the innerHTML of the element
+        stepTxtRef.current.innerHTML = `Step: ${counter}`;
+      }
+    }, [counter]);
+
+
+  const handleAStarSolve = () => {
+    setTimeout(async() => {
+      try {
+        const solution = solveWithAStar(puzzle);
+        animateSolution(solution)
+      } catch (error){
+        console.log("A* failed!")
+      }
+    }, 2000)
+  };
+
+  const handleDFS = async () => {
+    setTimeout(async() => {
+      try {
+        const solution = await solveWithDFS(puzzle);
+        animateSolution(solution)
+      } catch (error){
+        console.log("DFS failed!")
+      }
+    }, 2000)
+   };
+
+  const handleHillClimbing =  () => {
+    setTimeout(async() => {
+      try {
+        const solution =  solveWithHillClimbing(puzzle);
+        animateSolution(solution);
+      } catch (error){
+        console.log("HillClimbing failed!")
+      }
+    }, 2000)
   };
 
   const animateSolution = (solutionSteps) => {
@@ -17,6 +66,7 @@ function Puzzle() {
       if (step < solutionSteps.length) {
         setPuzzle(solutionSteps[step]);
         step++;
+        setCounter(step + 1)
       } else {
         clearInterval(interval);
       }
@@ -62,7 +112,15 @@ function Puzzle() {
         ))}
       </Box>
       <Box mt={3}>
-        <Button onClick={handleAStarSolve}>Solve with AI</Button>
+        <Button onClick={handleAStarSolve}>Solve with A*</Button>
+        <Button onClick={handleDFS}>Solve with DFS</Button>
+        <Button onClick={handleHillClimbing}>Solve with Hill Climbing</Button>
+        <h3 
+        id='step-text'
+        ref={stepTxtRef}
+        >
+          Step:{counter}
+        </h3>
       </Box>
     </Flex>
   );

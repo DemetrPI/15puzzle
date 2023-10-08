@@ -8,83 +8,196 @@ const SOLVED_STATE = [
 ];
 
 
-function aStar(initialState) {
-    return new Promise((resolve, reject) => {
-        let distance = {};
-        let queue = new Heap((o1, o2) => {
-            return o1.priority > o2.priority;
-        });
-        let initialBlankCoord = getBlankCoordinates(initialState);
-        let initialHeuristic = computeHeuristic(initialState);
-        let solved = false;
-        let previous = {};
-        let visited = new Set();
-
-        previous[initialState] = -1;
-        distance[initialState] = 0;
-
-        queue.insert({
-            data: [initialBlankCoord, initialState, initialHeuristic],
-            priority: initialHeuristic,
-        });
-
-        while (!queue.isEmpty() && !solved) {
-            let current = queue.pop();
-            let currentState = current.data[1];
-            let currentBlankCoord = current.data[0];
-
-            visited.add(currentState);
-
-            let nextPossibleStates = getNextPossibleStates(
-                currentBlankCoord,
-                currentState
-            );
-            for (let i = 0; i < nextPossibleStates.length; ++i) {
-                let possibleState = nextPossibleStates[i][1];
-                let possibleBlankCoord = nextPossibleStates[i][0];
-                if (visited.has(possibleState)) continue;
-
-                if (
-                    (distance[possibleState] !== undefined
-                        ? distance[possibleState]
-                        : Infinity) >
-                    distance[currentState] + 1
-                ) {
-                    distance[possibleState] = distance[currentState] + 1;
-                    let possibleStateHeuristic =
-                        computeHeuristic(possibleState);
-                    let priority =
-                        distance[possibleState] + possibleStateHeuristic;
-                    queue.insert({
-                        data: [
-                            possibleBlankCoord,
-                            possibleState,
-                            possibleStateHeuristic,
-                        ],
-                        priority: priority,
-                    });
-                    previous[possibleState] = currentState;
-
-                    if (possibleStateHeuristic === 0) {
-                        solved = true;
-                        break;
-                    }
-                }
-            }
+function aStar(initialState, callback) {
+    let distance = {};
+    let queue = new Heap((o1, o2) => {
+      return o1.priority > o2.priority;
+    });
+    let initialBlankCoord = getBlankCoordinates(initialState);
+    let initialHeuristic = computeHeuristic(initialState);
+    let solved = false;
+    let previous = {};
+    let visited = new Set();
+  
+    previous[initialState] = -1;
+    distance[initialState] = 0;
+  
+    queue.insert({
+      data: [initialBlankCoord, initialState, initialHeuristic],
+      priority: initialHeuristic,
+    });
+  
+    while (!queue.isEmpty() && !solved) {
+      let current = queue.pop();
+      let currentState = current.data[1];
+      let currentBlankCoord = current.data[0];
+  
+      visited.add(currentState);
+  
+      let nextPossibleStates = getNextPossibleStates(
+        currentBlankCoord,
+        currentState
+      );
+      for (let i = 0; i < nextPossibleStates.length; ++i) {
+        let possibleState = nextPossibleStates[i][1];
+        let possibleBlankCoord = nextPossibleStates[i][0];
+        if (visited.has(possibleState)) continue;
+  
+        if (
+          (distance[possibleState] !== undefined
+            ? distance[possibleState]
+            : Infinity) >
+          distance[currentState] + 1
+        ) {
+          distance[possibleState] = distance[currentState] + 1;
+          let possibleStateHeuristic = computeHeuristic(possibleState);
+          let priority =
+            distance[possibleState] + possibleStateHeuristic;
+          queue.insert({
+            data: [
+              possibleBlankCoord,
+              possibleState,
+              possibleStateHeuristic,
+            ],
+            priority: priority,
+          });
+          previous[possibleState] = currentState;
+  
+          if (possibleStateHeuristic === 0) {
+            solved = true;
+            break;
+          }
         }
+      }
+    }
+  
+    if (solved) {
+      let boardList = [];
+      let tempState = JSON.parse(JSON.stringify(SOLVED_STATE));
+  
+      while (tempState !== -1) {
+        boardList.push(tempState);
+        tempState = previous[tempState];
+      }
+      callback({ found: true, board_list: boardList });
+    } else {
+      callback({ found: false, board_list: [] });
+    }
+  }
+  
 
-        if (solved) {
+function dfs(initialState) {
+    return new Promise((resolve, reject) => {
+        let dfsPrevious = [];
+        dfsPrevious[initialState] = -1;
+        let initialBlankCoord = getBlankCoordinates(initialState);
+
+        if (dfsRec([initialBlankCoord, initialState], 0)) {
             let boardList = [];
             let tempState = JSON.parse(JSON.stringify(SOLVED_STATE));
 
             while (tempState !== -1) {
                 boardList.push(tempState);
-                tempState = previous[tempState];
+                tempState = dfsPrevious[tempState];
             }
             resolve({ found: true, board_list: boardList });
         }
 
         reject({ found: false, board_list: [] });
+    });
+}
+
+function dfsRec(state, depth) {
+    const currentState = state[1];
+    const blankCoord = state[0];
+
+    if (computeHeuristic(currentState) === 0) return true;
+
+    if (depth >= 30) {
+        return false;
+    }
+
+    let nextPossibleStates = getNextPossibleStates(blankCoord, currentState);
+    // nextPossibleStates = nextPossibleStates.sort(() => {return Math.random() - 0.5});
+
+    for (let i = 0; i < nextPossibleStates.length; ++i) {
+        let possibleState = nextPossibleStates[i][1];
+        let possibleBlankCoord = nextPossibleStates[i][0];
+        let dfsPrevious=[]
+
+        if (dfsPrevious[possibleState] === undefined) {
+            dfsPrevious[possibleState] = currentState;
+            if (dfsRec([possibleBlankCoord, possibleState], depth + 1))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+function hillClimbing(initialState, iterations = 200) {
+    return new Promise((resolve, reject) => {
+        let iteration = 0;
+        let currentState = JSON.parse(JSON.stringify(initialState));
+        let boardList = [];
+        let blankCoord = getBlankCoordinates(currentState);
+        let solved = false;
+
+        let visited = new Set();
+
+        while (iteration < iterations) {
+            visited.add(currentState);
+            boardList.push(currentState);
+
+            let currentHeuristic = computeHeuristic(currentState);
+
+            // break if solved the puzzle
+            if (currentHeuristic === 0) {
+                solved = true;
+                break;
+            }
+
+            let minHeuristic = Infinity;
+            let minState = undefined;
+            let minBlankCoord = { x: undefined, y: undefined };
+
+            let nextPossibleStates = getNextPossibleStates(
+                blankCoord,
+                currentState
+            );
+
+            for (let i = 0; i < nextPossibleStates.length; ++i) {
+                let possibleState = nextPossibleStates[i][1];
+                let possibleBlankCoord = nextPossibleStates[i][0];
+
+                if (visited.has(possibleState)) {
+                    continue;
+                }
+
+                let possibleStateHeuristic = computeHeuristic(possibleState);
+
+                if (possibleStateHeuristic < minHeuristic) {
+                    minHeuristic = possibleStateHeuristic;
+                    minState = possibleState;
+                    minBlankCoord = possibleBlankCoord;
+                }
+            }
+
+            if (currentHeuristic < minHeuristic) {
+                break;
+            }
+
+            currentState = JSON.parse(JSON.stringify(minState));
+            blankCoord = minBlankCoord;
+            iteration++;
+        }
+        if (solved) {
+            resolve({ found: true, board_list: boardList });
+        }
+
+        reject({ found: false, board_list: boardList });
     });
 }
 
@@ -134,4 +247,4 @@ function getBlankCoordinates(state) {
             if (state[i][j] === 0) return { x: i, y: j };
 }
 
-export { aStar }
+export { aStar,dfs, hillClimbing }
